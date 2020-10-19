@@ -14,7 +14,7 @@ setup(
     author='Round Services',
     author_email='esandoval@roundservices.biz',
     license='MIT License',
-    install_requires=['requests', 'keycloak', 'ldap', 'ldif'],
+    install_requires=['requests', 'keycloak', 'python-ldap', 'ldif'],
     packages=['rs', 'rs.partners'],
     zip_safe=False,
     python_requires='>=2.7'

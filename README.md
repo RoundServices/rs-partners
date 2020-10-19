@@ -7,8 +7,8 @@ Here you can find all the RS-APIs and Modules to simplify communication across a
 ## Setup
 
 ### Pre-requisites
-- Python > 2.7
-- PIP (package-management system)
+- Python > 3.x
+- pip3 (package-management system)
 - [rs-utils](https://github.com/RoundServices/rs-utils)
 
 ## Gluu couchbase API requisites
@@ -24,6 +24,12 @@ pip install --upgrade git+ssh://git@github.com:RoundServices/rs-partners.git@mas
 - HTTPS deploy
 ```sh
 pip install --upgrade git+https://github.com/RoundServices/rs-partners.git@master
+```
+- zip file downloaded from github
+```sh
+unzip -d ./ ./rs-partners-main.zip
+pip3 install --upgrade --force-reinstall ./rs-partners-main/.
+rm -rf ./rs-partners-main/
 ```
 
 ## Coding

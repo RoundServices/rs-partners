@@ -11,7 +11,7 @@ Here you can find all the RS-APIs and Modules to simplify communication across a
 - pip3 (package-management system)
 - [rs-utils](https://github.com/RoundServices/rs-utils)
 
-## Gluu couchbase API requisites
+## Couchbase API requisites
 - install couchbase dependencies following [SDK instructions](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html)
 
 ## Deploy

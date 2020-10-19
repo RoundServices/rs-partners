@@ -14,8 +14,8 @@ from couchbase.cluster import Cluster, PasswordAuthenticator
 ########## CLASSES #####################################################################################################
 ########################################################################################################################
 
-class Gluu4Couchbase:
-    def __init__(self, cb_uri, cb_username, cb_password, logger=Logger("Gluu4Couchbase")):
+class CouchbaseClient:
+    def __init__(self, cb_uri, cb_username, cb_password, logger=Logger("CouchbaseClient")):
         self._logger = logger
         self._logger.debug("Connecting to: {}".format(cb_uri))
         self._cb_cluster = Cluster(cb_uri, ClusterOptions(PasswordAuthenticator(cb_username, cb_password)))

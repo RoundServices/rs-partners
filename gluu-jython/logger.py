@@ -1,4 +1,4 @@
-# gluu-commons is available under the MIT License. https://gitlab.com/roundservices/gluu-commons/
+# rs-partners is available under the MIT License. https://gitlab.com/roundservices/rs-partners/
 # Copyright (c) 2020, Round Services LLC - https://roundservices.biz/
 #
 # Author: Ezequiel Sandoval - esandoval@roundservices.biz

@@ -5,9 +5,9 @@
 #
 
 import json
-from couchbase.cluster import Cluster, ClusterOptions
+from couchbase_utils.cluster import Cluster, ClusterOptions
 from rs.utils.basics import Logger
-from couchbase.cluster import Cluster, PasswordAuthenticator
+from couchbase_utils.cluster import Cluster, PasswordAuthenticator
 
 
 ########################################################################################################################

@@ -21,7 +21,7 @@ URL_ADMIN_FLOWS_EXECUTIONS_FLOW = URL_ADMIN_FLOWS_EXECUTIONS + "/flow"
 
 class RSKeycloakAdmin(KeycloakAdmin):
 	def __init__(self, logger, local_properties, server_url, username=None, password=None, realm_name='master', client_id='admin-cli', verify=True, client_secret_key=None, custom_headers=None, user_realm_name=None, auto_refresh_token=None):
-		keycloak_admin.__init__(self, server_url, username, password, realm_name, client_id, verify, client_secret_key, custom_headers, user_realm_name, auto_refresh_token)
+		KeycloakAdmin.__init__(self, server_url, username, password, realm_name, client_id, verify, client_secret_key, custom_headers, user_realm_name, auto_refresh_token)
 		self.logger = logger
 		self.local_properties = local_properties
 

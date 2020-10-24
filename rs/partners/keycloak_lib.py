@@ -7,7 +7,7 @@
 import json
 import os
 import shutil
-from keycloak import KeycloakAdmin as keycloak_admin
+from keycloak import KeycloakAdmin
 # needed for override methods
 from keycloak.exceptions import raise_error_from_response, KeycloakGetError
 from keycloak.urls_patterns import URL_ADMIN_CLIENT_SCOPES, URL_ADMIN_CLIENT, URL_ADMIN_FLOWS, URL_ADMIN_FLOWS_EXECUTIONS
@@ -19,7 +19,7 @@ URL_ADMIN_EXECUTION = "admin/realms/{realm-name}/authentication/executions/{id}"
 URL_ADMIN_FLOWS_EXECUTIONS_FLOW = URL_ADMIN_FLOWS_EXECUTIONS + "/flow"
 
 
-class KeycloakAdmin(keycloak_admin):
+class RSKeycloakAdmin(KeycloakAdmin):
 	def __init__(self, logger, local_properties, server_url, username=None, password=None, realm_name='master', client_id='admin-cli', verify=True, client_secret_key=None, custom_headers=None, user_realm_name=None, auto_refresh_token=None):
 		keycloak_admin.__init__(self, server_url, username, password, realm_name, client_id, verify, client_secret_key, custom_headers, user_realm_name, auto_refresh_token)
 		self.logger = logger

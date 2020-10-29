@@ -269,7 +269,7 @@ class OxTrustAPIClient:
         Validate if API is working properly asking for a RPT ticket to the default endpoint
         :return: True if response is not None, False if it is. Otherwise it will raise an error (Connectivity or permission problems for instance)
         """
-        return self.uma_client.getRPT(self.default_testing_endpoint_path) is not None
+        return self.uma_client.get_rpt(self.default_testing_endpoint_path) is not None
 
     def create(self, endpoint, json_obj):
         """
@@ -373,7 +373,7 @@ class OxTrustAPIClient:
         rpt = None
         if endpoint == 'attributes':
             url = '{}/attribute/{}'.format(endpoint, inum)
-            rpt = self.uma_client.getRPT(url)
+            rpt = self.uma_client.get_rpt(url)
         response = self.uma_client.get('{}/{}'.format(endpoint, inum)) if rpt is None else self.uma_client.execute(
             "GET", url, rpt=rpt)
         self.logger.debug("JSON Response: {}", response)

@@ -1,7 +1,5 @@
 # rs-partners
 
-
-# rs-partners
 Here you can find all the RS-APIs and Modules to simplify communication across all our partner products
 
 ## Setup
@@ -17,13 +15,13 @@ Here you can find all the RS-APIs and Modules to simplify communication across a
 ## Deploy
 To install/upgrade Round Services &copy; python-commons library, execute the following command on your server
 
-- SSH deploy (last version)
+- SSH deploy
 ```sh
-pip install --upgrade git+ssh://git@github.com:RoundServices/rs-partners.git@master
+pip install --upgrade git+ssh://git@github.com:RoundServices/rs-partners.git@main
 ```
 - HTTPS deploy
 ```sh
-pip install --upgrade git+https://github.com/RoundServices/rs-partners.git@master
+pip install --upgrade git+https://github.com/RoundServices/rs-partners.git@main
 ```
 - zip file downloaded from github
 ```sh
@@ -34,7 +32,7 @@ rm -rf ./rs-partners-main/
 
 ## Coding
 
-All classes contained in **rs** folder can be used for develop awesome scripts or classes, just import the dependencies on your python code:
+All classes contained in **rs** folder can be used to develop awesome scripts or classes, just import the dependencies on your python code:
 ```python
 from rs.package.MyClass import MyClass
 ```

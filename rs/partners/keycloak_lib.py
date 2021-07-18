@@ -41,6 +41,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		data_raw = self.raw_post(URL_ADMIN_CLIENT_SCOPES.format(**params_path), data=json.dumps(payload))
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201], skip_exists=skip_exists)
 
+
 	def get_client_service_account_user(self, client_id):
 		"""
 		Get service account user from client.
@@ -52,6 +53,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		params_path = {"realm-name": self.realm_name, "id": client_id}
 		data_raw = self.raw_get(URL_ADMIN_CLIENT_SERVICE_ACCOUNT_USER.format(**params_path))
 		return raise_error_from_response(data_raw, KeycloakGetError)
+
 
 	def delete_authentication_flow(self, flow_id):
 		"""
@@ -66,6 +68,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		params_path = {"realm-name": self.realm_name, "id": flow_id}
 		data_raw = self.raw_delete(URL_ADMIN_FLOW.format(**params_path))
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[204])
+
 
 	def create_authentication_flow_execution(self, payload, flow_alias):
 		"""
@@ -83,6 +86,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201])
 		return data_raw.headers['Location'].split('/')[-1]
 
+
 	def delete_authentication_flow_execution(self, execution_id):
 		"""
 		Delete authentication flow execution
@@ -97,6 +101,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		data_raw = self.raw_delete(URL_ADMIN_EXECUTION.format(**params_path))
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[204])
 
+
 	def update_authentication_flow_executions(self, payload, flow_alias):
 		"""
 		Update an authentication flow execution
@@ -109,6 +114,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		params_path = {"realm-name": self.realm_name, "flow-alias": flow_alias}
 		data_raw = self.raw_put(URL_ADMIN_FLOWS_EXECUTIONS.format(**params_path), data=json.dumps(payload))
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[202, 204])
+
 
 	def add_authentication_flow_executions_flow(self, payload, flow_alias, skip_exists=False):
 		"""
@@ -134,6 +140,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 				return True
 		return False
 
+
 	def rs_delete_client(self, client_id):
 		clients = self.get_clients()
 		for client in clients:
@@ -142,6 +149,28 @@ class RSKeycloakAdmin(KeycloakAdmin):
 			if client["clientId"] == client_id:
 				self.delete_client(client["id"])
 		return False
+
+
+	def rs_component_exists(self, component_id, parent, provider_type):
+		query = {"parent":parent, "type":provider_type}
+		self.logger.trace("query: {}", query)
+		components = self.get_components(query=query)
+		for component in components:
+			self.logger.trace("component: {}", component)
+			self.logger.trace("component_id: {}", component["id"])
+			if component["id"] == component_id:
+				return True
+		return False
+
+
+	def rs_delete_component_childs(self, component_id):
+		query = {"parent": component_id}
+		self.logger.trace("query: {}", query)
+		components = self.get_components(query=query)
+		for component in components:
+			self.logger.debug("Deleting component_id: {}", component["id"])
+			self.delete_component(component["id"])
+
 
 	def rs_get_authentication_flow(self, flow_alias):
 		authentication_flows = self.get_authentication_flows()
@@ -152,6 +181,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 			if authentication_flow["alias"] == flow_alias:
 				return authentication_flow
 		return None
+
 
 	def rs_get_execution_flow(self, flow_alias, execution_flow_id):
 		executions = self.get_authentication_flow_executions(flow_alias)
@@ -164,6 +194,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 					return execution
 		return None
 
+
 	def rs_create_realm(self, realm_json_file, temp_file):
 		shutil.copyfile(realm_json_file, temp_file)
 		self.local_properties.replace(temp_file)
@@ -171,6 +202,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 			json_data = json.load(json_file)
 			self.logger.trace("json_data: {}", json_data)
 			self.create_realm(json_data, skip_exists=True)
+
 
 	def rs_update_realm_attributes(self, objects_folder, realm_name, temp_file):
 		self.logger.debug("Importing realm attributes")
@@ -183,6 +215,33 @@ class RSKeycloakAdmin(KeycloakAdmin):
 					json_data = json.load(json_file)
 					self.logger.trace("json_data: {}", json_data)
 					self.update_realm(realm_name, json_data)
+
+
+	def rs_import_components(self, objects_folder, realm_id, temp_file):
+		self.logger.debug("Importing components from: {}", objects_folder)
+		for directory_entry in sorted(os.scandir(objects_folder), key=lambda path: path.name):
+			if directory_entry.is_file() and directory_entry.path.endswith(".json"):
+				self.logger.debug("Processing file: {}", directory_entry.path)
+				shutil.copyfile(directory_entry.path, temp_file)
+				self.local_properties.replace(temp_file)
+				with open(temp_file) as json_file:
+					json_data = json.load(json_file)
+					self.logger.trace("Component definition: {}", json_data)
+					component_id = json_data["id"]
+					provider_type = json_data["providerType"]
+					if "parentId" in json_data:
+						parent = json_data["parentId"]
+					else:
+						parent = realm_id
+					if self.rs_component_exists(component_id, parent, provider_type):
+						self.logger.debug("Component '{}' already exists. Updating...", component_id)
+						self.update_component(component_id, json_data)
+					else:
+						self.logger.debug("Component '{}' does not exist. Creating...", component_id)
+						self.create_component(json_data)
+						self.logger.debug("Deleting default childs for component_id:  ", component_id)
+						self.rs_delete_component_childs(component_id)
+
 
 	def rs_import_authentication_flows(self, objects_folder, temp_file):
 		self.logger.debug("Importing authentication flows")
@@ -247,6 +306,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 							self.logger.debug("Updating Authentication Flow Execution using: {}", authentication_execution)
 							self.update_authentication_flow_executions(authentication_execution, flow_alias)
 
+
 	def rs_get_execution_by_provider(self, flow_alias, execution_provider_id):
 		executions = self.get_authentication_flow_executions(flow_alias)
 		for execution in executions:
@@ -255,12 +315,14 @@ class RSKeycloakAdmin(KeycloakAdmin):
 				return execution
 		return None
 
+
 	def rs_set_execution_attribute(self, flow_alias, execution_provider_id, attr_name, attr_value):
 		execution = self.rs_get_execution_by_provider(flow_alias, execution_provider_id)
 		self.logger.debug("Current execution: {}", execution)
 		execution[attr_name] = attr_value
 		self.logger.debug("Updating execution to: {}", execution)
 		self.update_authentication_flow_executions(execution, flow_alias)
+
 
 	def rs_create_client_scopes(self, objects_folder, temp_file):
 		self.logger.debug("Importing client scopes")
@@ -273,6 +335,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 					json_data = json.load(json_file)
 					self.logger.trace("json_data: {}", json_data)
 					self.create_client_scope(json_data, skip_exists=True)
+
 
 	def rs_import_clients(self, objects_folder, temp_file):
 		self.logger.debug("Importing clients from: {}", objects_folder)
@@ -292,6 +355,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 					else:
 						self.logger.debug("Client '{}' does not exist. Creating...", client_id)
 						self.create_client(json_data, skip_exists=True)
+
 
 	def rs_assign_roles_to_client(self, client, role_names):
 		client_id = self.get_client_id(client)

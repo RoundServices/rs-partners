@@ -27,33 +27,6 @@ class RSKeycloakAdmin(KeycloakAdmin):
 
 # ###########################
 # Override methods
-	def create_client_scope(self, payload, skip_exists=False):
-		"""
-		Create a client scope
-
-		ClientScopeRepresentation: https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_getclientscopes
-
-		:param payload: ClientScopeRepresentation
-		:param skip_exists: If true then do not raise an error if client scope already exists
-		:return:  Keycloak server response (ClientScopeRepresentation)
-		"""
-		params_path = {"realm-name": self.realm_name}
-		data_raw = self.raw_post(URL_ADMIN_CLIENT_SCOPES.format(**params_path), data=json.dumps(payload))
-		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201], skip_exists=skip_exists)
-
-
-	def get_client_service_account_user(self, client_id):
-		"""
-		Get service account user from client.
-
-		:param client_id: id in ClientRepresentation
-		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_clientrepresentation
-		:return: UserRepresentation
-		"""
-		params_path = {"realm-name": self.realm_name, "id": client_id}
-		data_raw = self.raw_get(URL_ADMIN_CLIENT_SERVICE_ACCOUNT_USER.format(**params_path))
-		return raise_error_from_response(data_raw, KeycloakGetError)
-
 
 	def delete_authentication_flow(self, flow_id):
 		"""
@@ -70,23 +43,6 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[204])
 
 
-	def create_authentication_flow_execution(self, payload, flow_alias):
-		"""
-		Create a new authentication flow execution
-
-		AuthenticationExecutionInfoRepresentation
-		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_authenticationexecutioninforepresentation
-
-		:param payload: AuthenticationExecutionInfoRepresentation
-		:param skip_exists: If true then do not raise an error if authentication execution flow already exists
-		:return: Keycloak server response (AuthenticationExecutionInfoRepresentation)
-		"""
-		params_path = {"realm-name": self.realm_name, "flow-alias": flow_alias}
-		data_raw = self.raw_post(URL_ADMIN_FLOWS_EXECUTION.format(**params_path), data=json.dumps(payload))
-		raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201])
-		return data_raw.headers['Location'].split('/')[-1]
-
-
 	def delete_authentication_flow_execution(self, execution_id):
 		"""
 		Delete authentication flow execution
@@ -100,20 +56,6 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		params_path = {"realm-name": self.realm_name, "id": execution_id}
 		data_raw = self.raw_delete(URL_ADMIN_EXECUTION.format(**params_path))
 		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[204])
-
-
-	def update_authentication_flow_executions(self, payload, flow_alias):
-		"""
-		Update an authentication flow execution
-		AuthenticationExecutionInfoRepresentation
-		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_authenticationexecutioninforepresentation
-		:param payload: AuthenticationExecutionInfoRepresentation
-		:param flow_alias: The flow alias
-		:return: Keycloak server response
-		"""
-		params_path = {"realm-name": self.realm_name, "flow-alias": flow_alias}
-		data_raw = self.raw_put(URL_ADMIN_FLOWS_EXECUTIONS.format(**params_path), data=json.dumps(payload))
-		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[202, 204])
 
 
 	def add_authentication_flow_executions_flow(self, payload, flow_alias, skip_exists=False):

@@ -10,7 +10,7 @@ import shutil
 from keycloak import KeycloakAdmin
 # needed for override methods
 from keycloak.exceptions import raise_error_from_response, KeycloakGetError
-from keycloak.urls_patterns import URL_ADMIN_CLIENT_SCOPES, URL_ADMIN_CLIENT, URL_ADMIN_FLOWS, URL_ADMIN_FLOWS_EXECUTIONS
+from keycloak.urls_patterns import URL_ADMIN_CLIENT, URL_ADMIN_FLOWS, URL_ADMIN_FLOWS_EXECUTIONS, URL_ADMIN_IDP
 
 URL_ADMIN_CLIENT_SERVICE_ACCOUNT_USER = URL_ADMIN_CLIENT + "/service-account-user"
 URL_ADMIN_FLOW = URL_ADMIN_FLOWS + "{id}"
@@ -71,6 +71,24 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201], skip_exists=skip_exists)
 		return data_raw.headers['Location'].split('/')[-1]
 
+
+	def update_idp(self, idp_alias, payload):
+		"""
+		Update an ID Provider
+
+		IdentityProviderRepresentation
+		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_identityproviderrepresentation
+
+		:param: idp_alias: idp alias name
+		:param: payload: IdentityProviderRepresentation
+		"""
+
+		params_path = {"realm-name": self.realm_name, "alias": idp_alias}
+		data_raw = self.raw_put(URL_ADMIN_IDP.format(**params_path),
+								data=json.dumps(payload))
+		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[204])
+
+
 # ###########################
 # Added methods
 	def rs_client_exists(self, client_id):
@@ -112,6 +130,16 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		for component in components:
 			self.logger.debug("Deleting component_id: {}", component["id"])
 			self.delete_component(component["id"])
+
+
+	def rs_idp_exists(self, idp_alias):
+		idps = self.get_idps()
+		for idp in idps:
+			self.logger.trace("idp: {}", idp)
+			self.logger.trace("idp alias: {}", idp["alias"])
+			if idp["alias"] == idp_alias:
+				return True
+		return False
 
 
 	def rs_get_authentication_flow(self, flow_alias):
@@ -183,6 +211,25 @@ class RSKeycloakAdmin(KeycloakAdmin):
 						self.create_component(json_data)
 						self.logger.debug("Deleting default childs for component_id:  ", component_id)
 						self.rs_delete_component_childs(component_id)
+
+
+	def rs_import_idps(self, objects_folder, temp_file):
+		self.logger.debug("Importing ID providers from: {}", objects_folder)
+		for directory_entry in sorted(os.scandir(objects_folder), key=lambda path: path.name):
+			if directory_entry.is_file() and directory_entry.path.endswith(".json"):
+				self.logger.debug("Processing file: {}", directory_entry.path)
+				shutil.copyfile(directory_entry.path, temp_file)
+				self.local_properties.replace(temp_file)
+				with open(temp_file) as json_file:
+					json_data = json.load(json_file)
+					self.logger.trace("ID provider definition: {}", json_data)
+					idp_alias = json_data["alias"]
+					if self.rs_idp_exists(idp_alias):
+						self.logger.debug("ID provider '{}' already exists. Updating...", idp_alias)
+						self.update_idp(idp_alias, json_data)
+					else:
+						self.logger.debug("Identity provider '{}' does not exist. Creating...", idp_alias)
+						self.create_idp(json_data)
 
 
 	def rs_import_authentication_flows(self, objects_folder, temp_file):

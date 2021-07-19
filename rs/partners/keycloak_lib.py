@@ -72,6 +72,41 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		return data_raw.headers['Location'].split('/')[-1]
 
 
+	# this method returns ths execution id
+	def create_authentication_flow_execution(self, payload, flow_alias):
+		"""
+		Create a new authentication flow execution
+
+		AuthenticationExecutionInfoRepresentation
+		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_authenticationexecutioninforepresentation
+
+		:param payload: AuthenticationExecutionInfoRepresentation
+		:param skip_exists: If true then do not raise an error if authentication execution flow already exists
+		:return: Keycloak server response (AuthenticationExecutionInfoRepresentation)
+		"""
+		params_path = {"realm-name": self.realm_name, "flow-alias": flow_alias}
+		data_raw = self.raw_post(URL_ADMIN_FLOWS_EXECUTION.format(**params_path), data=json.dumps(payload))
+		raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[201])
+		return data_raw.headers['Location'].split('/')[-1]
+
+
+	# meethod returns 202, not 204 as expected in the method in the library
+	def update_authentication_flow_executions(self, payload, flow_alias):
+		"""
+		Update an authentication flow execution
+
+		AuthenticationExecutionInfoRepresentation
+		https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_authenticationexecutioninforepresentation
+
+		:param payload: AuthenticationExecutionInfoRepresentation
+		:param flow_alias: The flow alias
+		:return: Keycloak server response
+		"""
+		params_path = {"realm-name": self.realm_name, "flow-alias": flow_alias}
+		data_raw = self.raw_put(URL_ADMIN_FLOWS_EXECUTIONS.format(**params_path), data=json.dumps(payload))
+		return raise_error_from_response(data_raw, KeycloakGetError, expected_codes=[202, 204])
+
+
 	def update_idp(self, idp_alias, payload):
 		"""
 		Update an ID Provider
@@ -243,12 +278,15 @@ class RSKeycloakAdmin(KeycloakAdmin):
 					authentication_flow = json.load(json_file)
 					authentication_executions = authentication_flow["authenticationExecutions"]
 					self.logger.trace("json_data: {}", authentication_flow)
+
 					# Create flow without executions (if flow does not exist)
 					authentication_flow.pop("authenticationExecutions", None)
 					self.logger.debug("Creating Authentication Flow using: {}", authentication_flow)
 					flow_alias = authentication_flow["alias"]
 					self.logger.trace("Flow alias: {}", flow_alias)
-					self.create_authentication_flow(json.dumps(authentication_flow), skip_exists=True)
+					# create_authentication_flow() expects payload as dict, not string
+					self.create_authentication_flow(authentication_flow, skip_exists=True)
+
 					# Delete any current (level=0) executions from flow
 					current_executions = self.get_authentication_flow_executions(flow_alias)
 					self.logger.trace("Current executions for flow alias '{}': {}", flow_alias, current_executions)
@@ -256,6 +294,7 @@ class RSKeycloakAdmin(KeycloakAdmin):
 						if current_execution["level"] == 0:
 							self.logger.debug("Deleting authentication execution: {}", current_execution)
 							self.delete_authentication_flow_execution(current_execution["id"])
+
 					# Add new executions
 					for authentication_execution in authentication_executions:
 						self.logger.debug("Processing authentication execution: {}", authentication_execution)

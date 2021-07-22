@@ -146,6 +146,16 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		return False
 
 
+	def rs_get_client_scope_id(self, client_scope_name):
+		client_scopes = self.get_client_scopes()
+		for client_scope in client_scopes:
+			#self.logger.trace("rs_get_client_scope_id() client scope: {}", client_scope)
+			#self.logger.trace("rs_get_client_scope_id() client scope name: {}", client_scope["name"])
+			if client_scope["name"] == client_scope_name:
+				return client_scope["id"]
+		return None
+
+
 	def rs_component_exists(self, component_id, parent, provider_type):
 		query = {"parent":parent, "type":provider_type}
 		self.logger.trace("query: {}", query)
@@ -352,8 +362,8 @@ class RSKeycloakAdmin(KeycloakAdmin):
 		self.update_authentication_flow_executions(execution, flow_alias)
 
 
-	def rs_create_client_scopes(self, objects_folder, temp_file):
-		self.logger.debug("Importing client scopes")
+	def rs_import_client_scopes(self, objects_folder, temp_file):
+		self.logger.debug("Importing client scopes from: {}", objects_folder)
 		for directory_entry in sorted(os.scandir(objects_folder), key=lambda path: path.name):
 			if directory_entry.is_file() and directory_entry.path.endswith(".json"):
 				self.logger.debug("Processing file: {}", directory_entry.path)
@@ -361,8 +371,32 @@ class RSKeycloakAdmin(KeycloakAdmin):
 				self.local_properties.replace(temp_file)
 				with open(temp_file) as json_file:
 					json_data = json.load(json_file)
-					self.logger.trace("json_data: {}", json_data)
-					self.create_client_scope(json_data, skip_exists=True)
+					self.logger.trace("Client scope definition: {}", json_data)
+					client_scope_name = json_data["name"]
+					client_scope_id = self.rs_get_client_scope_id(client_scope_name)
+					if client_scope_id is not None:
+						self.logger.debug("Client scope '{}' already exists with internal id: '{}'. Updating attributes.", client_scope_name, client_scope_id)
+						# update_client_scope() does NOT update mappers.
+						self.update_client_scope(client_scope_id, json_data)
+						deployed_client_scope = self.get_client_scope(client_scope_id)
+						self.logger.debug("Deployed client scope: '{}'", deployed_client_scope)
+						if "protocolMappers" in deployed_client_scope:
+							deployed_mappers = deployed_client_scope["protocolMappers"]
+							for deployed_mapper in deployed_mappers:
+								deployed_mapper_id = deployed_mapper["id"]
+								deployed_mapper_name = deployed_mapper["name"]
+								self.logger.debug("Deleting deployed mapper '{}' ({}) from client_scope: {}", deployed_mapper_name, deployed_mapper_id, client_scope_name)
+								self.delete_mapper_from_client_scope(client_scope_id, deployed_mapper_id)
+						else:
+							self.logger.debug("Deployed client scope '{}' ({}) has NO protocol mappers.", client_scope_name, client_scope_id)
+						new_mappers = json_data["protocolMappers"]
+						for new_mapper in new_mappers:
+							self.logger.debug("Adding mapper: '{}' to client_scope: {}", new_mapper, client_scope_name)
+							self.add_mapper_to_client_scope(client_scope_id, new_mapper)
+						self.logger.debug("Client scope '{}' updated.", client_scope_name)
+					else:
+						self.logger.debug("Client scope '{}' does not exist. Creating...", client_scope_name)
+						self.create_client_scope(json_data, skip_exists=True)
 
 
 	def rs_import_clients(self, objects_folder, temp_file):

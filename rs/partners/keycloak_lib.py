@@ -389,10 +389,13 @@ class RSKeycloakAdmin(KeycloakAdmin):
 								self.delete_mapper_from_client_scope(client_scope_id, deployed_mapper_id)
 						else:
 							self.logger.debug("Deployed client scope '{}' ({}) has NO protocol mappers.", client_scope_name, client_scope_id)
-						new_mappers = json_data["protocolMappers"]
-						for new_mapper in new_mappers:
-							self.logger.debug("Adding mapper: '{}' to client_scope: {}", new_mapper, client_scope_name)
-							self.add_mapper_to_client_scope(client_scope_id, new_mapper)
+						if "protocolMappers" in json_data:
+							new_mappers = json_data["protocolMappers"]
+							for new_mapper in new_mappers:
+								self.logger.debug("Adding mapper: '{}' to client_scope: {}", new_mapper, client_scope_name)
+								self.add_mapper_to_client_scope(client_scope_id, new_mapper)
+						else:
+							self.logger.debug("Updated client scope '{}' has NO protocol mappers.", client_scope_name)
 						self.logger.debug("Client scope '{}' updated.", client_scope_name)
 					else:
 						self.logger.debug("Client scope '{}' does not exist. Creating...", client_scope_name)

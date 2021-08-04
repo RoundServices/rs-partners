@@ -261,7 +261,7 @@ class OxTrustAPIClient:
         self.api_base_endpoint = api_base_endpoint
         self.default_testing_endpoint_path = default_testing_endpoint_path
         self.logger = logger
-        self.uma_client = UMAClient(api_base_endpoint, b64_client_credentials, logger)
+        self.uma_client = UMAClient(api_base_endpoint, b64_client_credentials, logger, verify=False)
         self.validate_api()
 
     def validate_api(self):

@@ -11,6 +11,14 @@ Here you can find all the RS-APIs and Modules to simplify communication across a
 
 ## Couchbase API requisites
 - install couchbase dependencies following [SDK instructions](https://docs.couchbase.com/python-sdk/current/hello-world/start-using-sdk.html)
+- install CMake 3.x
+```sh
+# CentOS
+sudo yum -y install make3
+
+# Ubuntu 20
+sudo apt-get -y install make
+```  
 
 ## Deploy
 To install/upgrade Round Services &copy; python-commons library, execute the following command on your server

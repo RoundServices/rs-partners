@@ -191,25 +191,26 @@ class Gluu4JSON:
         self._logger.trace("Getting attr values for attr: {}, attr_values: {}".format(attr_name, attr_values))
         # process ObjectClass
         if attr_name == "objectClass":
-            attr_values.remove(b'top')
+            if 'top' in attr_values:
+                attr_values.remove('top')
             for attr_value in attr_values:
-                if 'Custom' in attr_value.decode() and len(attr_values) > 1:
+                if 'Custom' in attr_value and len(attr_values) > 1:
                     attr_values.remove(attr_value)
-                if not 'gluu' in attr_value.decode().lower() and len(attr_values) > 1:
+                if not 'gluu' in attr_value.lower() and len(attr_values) > 1:
                     attr_values.remove(attr_value)
-            return attr_values[0].decode()
+            return attr_values[0]
         # process multi-valued string attributes
         if attr_name in ["memberOf"]:
             new_values = []
             for attr_value in attr_values:
-                new_values.append(attr_value.decode())
+                new_values.append(attr_value)
             return new_values
         # process single-valued numeric attributes
         if attr_name in ["oxCounter", "oxDeviceHashCode"]:
-            return int(attr_values[0].decode())
+            return int(attr_values[0])
         # process single-valued datetime attributes
         if attr_name in ["creationDate", "createTimestamp", "oxAuthExpiration", "oxLastAccessTime"]:
-            my_date_str = attr_values[0].decode()
+            my_date_str = attr_values[0]
             self._logger.trace("my_date_str: {}", my_date_str)
             # 20201122112233.456Z  ->  2020-11-22T11:22:33.000000
             my_date = "{}-{}-{}T{}:{}:{}.000000".format(my_date_str[0:4], my_date_str[4:6], my_date_str[6:8],
@@ -218,20 +219,19 @@ class Gluu4JSON:
             return my_date
         # process boolean attributes
         if attr_name in ["del"]:
-            if attr_values[0].decode() in ["true", "True", "TRUE"]:
+            if attr_values[0] in ["true", "True", "TRUE"]:
                 return True
             else:
                 return False
         # by default, process attribute as single-valued string
-        return attr_values[0].decode()
+        return attr_values[0]
 
     def get_documents_from_ldif(self, ldif_fn):
         self._logger.info("Processing file: {}".format(ldif_fn))
-        ldif_file = open(ldif_fn, "r")
+        ldif_file = open(ldif_fn, "rb")
         parser = DefaultLDIFParser(ldif_file)
-        parser.parse()
         documents = []
-        for dn, entry in parser.entries:
+        for dn, entry in parser.parse():
             self._logger.debug("Processing dn: {}".format(dn))
             self._logger.trace("entry: {}".format(entry))
             key = self._get_key_from_dn(dn)

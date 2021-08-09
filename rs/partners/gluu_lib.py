@@ -226,7 +226,7 @@ class Gluu4JSON:
         return attr_values[0].decode()
 
     def get_documents_from_ldif(self, ldif_fn):
-        self._logger.info("Importing file: {}".format(ldif_fn))
+        self._logger.info("Processing file: {}".format(ldif_fn))
         ldif_file = open(ldif_fn, "r")
         parser = DefaultLDIFParser(ldif_file)
         parser.parse()
@@ -518,3 +518,6 @@ def gluu_encode(salt_file, data):
     b64_data = base64.b64encode(en_data).decode()
     return b64_data
 
+def get_documents_from_ldif(ldif_file, logger):
+    gluu4json = Gluu4JSON(logger)
+    return gluu4json.get_documents_from_ldif(ldif_file)

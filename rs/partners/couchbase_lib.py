@@ -70,26 +70,11 @@ class CouchbaseClient:
 ########################################################################################################################
 
 
-def json2couchbase(document_path, couchbase_uri, couchbase_username, couchbase_password, couchbase_bucket, document_id):
-    with open(document_path, "r") as document_file:
-        document_data = document_file.read().replace('\n', '')
-    document_json = (json.loads(document_data))
-    print("Connecting to: %s" % couchbase_uri)
-    cb_cluster = Cluster(couchbase_uri, ClusterOptions(PasswordAuthenticator(couchbase_username, couchbase_password)))
-    print("Opening bucket: %s" % couchbase_bucket)
-    cb_bucket = cb_cluster.bucket(couchbase_bucket)
-    print("Inserting document id: %s" % document_id)
-    cb_bucket.upsert(document_id, document_json)
-    print("Process finished.")
+def json2couchbase(document_path, couchbase_uri, couchbase_username, couchbase_password, couchbase_bucket, document_id, logger):
+    couchbaseClient = CouchbaseClient(couchbase_uri, couchbase_username, couchbase_password, logger)
+    couchbaseClient.import_json_file(document_path, couchbase_bucket, document_id)
 
 
-def couchbase2json(couchbase_uri, couchbase_username, couchbase_password, couchbase_bucket, document_id, document_path):
-    print("Connecting to: %s" % couchbase_uri)
-    cb_cluster = Cluster(couchbase_uri, ClusterOptions(PasswordAuthenticator(couchbase_username, couchbase_password)))
-    print("Opening bucket: %s" % couchbase_bucket)
-    cb_bucket = cb_cluster.bucket(couchbase_bucket)
-    print("Getting document_id: %s." % document_id)
-    document_json = cb_bucket.get(document_id).value
-    print("Writing JSON in %s." % document_path)
-    with open(document_path, "w") as document_file:
-        json.dump(document_json, document_file, indent=4)
+def couchbase2json(couchbase_uri, couchbase_username, couchbase_password, couchbase_bucket, document_id, document_path, logger):
+    couchbaseClient = CouchbaseClient(couchbase_uri, couchbase_username, couchbase_password, logger)
+    couchbaseClient.export_json_file(couchbase_bucket, document_id, document_path)

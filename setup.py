@@ -1,5 +1,5 @@
 # rs-utils is available under the MIT License. https://github.com/roundservices/rs-utils/
-# Copyright (c) 2020, Round Services LLC - https://roundservices.biz/
+# Copyright (c) 2021, Round Services LLC - https://roundservices.biz/
 #
 # Author: Ezequiel Sandoval - esandoval@roundservices.biz
 #
@@ -14,7 +14,7 @@ setup(
     author='Round Services',
     author_email='esandoval@roundservices.biz',
     license='MIT License',
-    install_requires=['requests', 'python-keycloak', 'python-ldap', 'ldif', 'testresources', 'couchbase'],
+    install_requires=['requests', 'python-keycloak>=0.26.1', 'python-ldap', 'ldif', 'testresources', 'couchbase'],
     packages=['rs', 'rs.partners'],
     zip_safe=False,
     python_requires='>=2.7'

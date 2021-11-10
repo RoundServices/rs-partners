@@ -14,7 +14,7 @@ setup(
     author='Round Services',
     author_email='esandoval@roundservices.biz',
     license='MIT License',
-    install_requires=['requests', 'python-keycloak>=0.26.1', 'python-ldap', 'ldif', 'testresources', 'couchbase'],
+    install_requires=['requests', 'python-ldap', 'ldif', 'testresources', 'couchbase'],
     packages=['rs', 'rs.partners'],
     zip_safe=False,
     python_requires='>=2.7'
